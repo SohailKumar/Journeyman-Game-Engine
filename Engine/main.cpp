@@ -1,62 +1,56 @@
-#include "Ogre.h"
-#include "OgreApplicationContext.h"
+#define SDL_MAIN_USE_CALLBACKS 1
+#include "SDL3/SDL.h";
+#include "SDL3/SDL_main.h";
 
-class KeyHandler : public OgreBites::InputListener
+static SDL_Window* window = NULL;
+static SDL_Renderer* renderer = NULL;
+
+// Start function
+SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[]) {
+	SDL_SetAppMetadata("Renderer Test", "0.1", "journeymanengine");
+
+	if (!SDL_Init(SDL_INIT_VIDEO)) {
+		SDL_Log("Couldn't initialize SDL: %s", SDL_GetError());
+		return SDL_APP_FAILURE;
+	}
+
+	if (!SDL_CreateWindowAndRenderer("Renderer Test", 1280, 720, SDL_WINDOW_RESIZABLE, &window, &renderer)) {
+		SDL_Log("Couldn't create window/renderer: %s", SDL_GetError());
+		return SDL_APP_FAILURE;
+	}
+
+	SDL_SetRenderLogicalPresentation(renderer, 1280, 720, SDL_LOGICAL_PRESENTATION_LETTERBOX);
+
+	return SDL_APP_CONTINUE;
+}
+
+// Runs on events (mouse input, keypresses, etc)
+SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event) 
 {
-    bool keyPressed(const OgreBites::KeyboardEvent& evt) override
-    {
-        if (evt.keysym.sym == OgreBites::SDLK_ESCAPE)
-        {
-            Ogre::Root::getSingleton().queueEndRendering();
-        }
-        return true;
-    }
-};
+	if (event->type == SDL_EVENT_QUIT) {
+		return SDL_APP_SUCCESS;
+	}
 
-int main(int argc, char* argv[])
+	return SDL_APP_CONTINUE;
+}
+
+SDL_AppResult SDL_AppIterate(void *appstate) 
 {
-    OgreBites::ApplicationContext ctx("OgreTutorialApp");
-    ctx.initApp();
+	const double now = ((double)SDL_GetTicks()) / 1000.0; // ms to sec
 
-    // get a pointer to the already created root
-    Ogre::Root* root = ctx.getRoot();
-    Ogre::SceneManager* scnMgr = root->createSceneManager();
+	const float red = (float)(0.5 + 0.5 * SDL_sin(now));
+	const float blue = (float)(0.5 + 0.5 * SDL_sin(now));
+	const float green = (float)(0.5 + 0.5 * SDL_sin(now));
+	SDL_SetRenderDrawColorFloat(renderer, red, green, blue, SDL_ALPHA_OPAQUE_FLOAT);
 
-    // register our scene with the RTSS
-    Ogre::RTShader::ShaderGenerator* shadergen = Ogre::RTShader::ShaderGenerator::getSingletonPtr();
-    shadergen->addSceneManager(scnMgr);
+	SDL_RenderClear(renderer);
 
-    // without light we would just get a black screen    
-    Ogre::Light* light = scnMgr->createLight("MainLight");
-    Ogre::SceneNode* lightNode = scnMgr->getRootSceneNode()->createChildSceneNode();
-    lightNode->setPosition(0, 10, 15);
-    lightNode->attachObject(light);
+	SDL_RenderPresent(renderer);
 
-    // also need to tell where we are
-    Ogre::SceneNode* camNode = scnMgr->getRootSceneNode()->createChildSceneNode();
-    camNode->setPosition(0, 0, 15);
-    camNode->lookAt(Ogre::Vector3(0, 0, -1), Ogre::Node::TS_PARENT);
+	return SDL_APP_CONTINUE;
+}
 
-    // create the camera
-    Ogre::Camera* cam = scnMgr->createCamera("myCam");
-    cam->setNearClipDistance(5); // specific to this sample
-    cam->setAutoAspectRatio(true);
-    camNode->attachObject(cam);
+void SDL_AppQuit(void* appstate, SDL_AppResult result) 
+{
 
-    // and tell it to render into the main window
-    ctx.getRenderWindow()->addViewport(cam);
-
-    // finally something to render
-    Ogre::Entity* ent = scnMgr->createEntity("Sinbad.mesh");
-    Ogre::SceneNode* node = scnMgr->getRootSceneNode()->createChildSceneNode();
-    node->attachObject(ent);
-
-    // register for input events
-    KeyHandler keyHandler;
-    ctx.addInputListener(&keyHandler);
-
-    ctx.getRoot()->startRendering();
-    ctx.closeApp();
-
-    return 0;
 }
