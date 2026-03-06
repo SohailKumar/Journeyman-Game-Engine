@@ -13,14 +13,14 @@ class KeyHandler : public OgreBites::InputListener
     }
 };
 
-int main(int argc, char* argv[])
-{
-    // NOTE: OGRE3D comes prepackaged with a utility class called OgreBites, which provides a ton of wrapper functions for SDL2
-    // NOTE: This 
-
-    OgreBites::ApplicationContext ctx("OgreTutorialApp");
-    ctx.initApp();
-}
+//int main(int argc, char* argv[])
+//{
+//    // NOTE: OGRE3D comes prepackaged with a utility class called OgreBites, which provides a ton of wrapper functions for SDL2
+//    // NOTE: This 
+//
+//    OgreBites::ApplicationContext ctx("OgreTutorialApp");
+//    ctx.initApp();
+//}
 //    // get a pointer to the already created root
 //    Ogre::Root* root = ctx.getRoot();
 //    Ogre::SceneManager* scnMgr = root->createSceneManager();
