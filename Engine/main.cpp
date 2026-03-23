@@ -66,6 +66,9 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[]) {
 			// These are usually in the /Media/RTShaderLib folder of the Ogre SDK
 			//Ogre::ResourceGroupManager::getSingleton().addResourceLocation("path/to/RTShaderLib", "FileSystem");
 		}
+		else {
+			throw std::exception("bad");
+		}
 
 		scnMgr->setAmbientLight(Ogre::ColourValue::ColourValue(0.5, 0.0, 0.0));
 
@@ -86,7 +89,20 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[]) {
 		Ogre::Viewport* vp = ogreWin->addViewport(cam);
 		vp->setBackgroundColour(Ogre::ColourValue::ColourValue(0.2, 0.2 , 0.2));
 		
+		if (Ogre::RTShader::ShaderGenerator::initialize())
+		{
+			// Register the scene manager.
+			Ogre::RTShader::ShaderGenerator::getSingleton().addSceneManager(scnMgr);
+		}
 
+		Ogre::RTShader::ShaderGenerator* mShaderGenerator = Ogre::RTShader::ShaderGenerator::getSingletonPtr();
+
+		// Apply the shader generated based techniques.
+		vp->setMaterialScheme(Ogre::MSN_SHADERGEN);
+		// Set the material scheme to the RTSS default
+		//vp->setMaterialScheme(Ogre::RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME);
+
+		Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
 	}
 	catch (Ogre::Exception& e) {
 		std::cerr << "...................................................\n";
@@ -106,50 +122,79 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event)
 	if (event->type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
 
 		try {
-			// 1. Create the ManualObject
-			Ogre::ManualObject* cube = scnMgr->createManualObject("UserCube");
+			{
+				Ogre::Plane plane(Ogre::Vector3::UNIT_Y, -10);
 
-			// 2. Start defining the mesh using a material
-			cube->begin("", Ogre::RenderOperation::OT_TRIANGLE_LIST);
+				Ogre::MeshManager::getSingleton().createPlane("plane", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, plane, 1500, 1500, 20, 20, true, 1, 5, 5, Ogre::Vector3::UNIT_Z);
 
-			// Define the 8 vertices of a cube
-			// Front face
-			cube->position(-5, 5, 5); // 0
-			cube->position(5, 5, 5); // 1
-			cube->position(5, -5, 5); // 2
-			cube->position(-5, -5, 5); // 3
+				Ogre::Entity* ent = scnMgr->createEntity("LightPlaneEntity", "plane");
 
-			// Back face
-			cube->position(-5, 5, -5); // 4
-			cube->position(5, 5, -5); // 5
-			cube->position(5, -5, -5); // 6
-			cube->position(-5, -5, -5); // 7
+				scnMgr->getRootSceneNode()->createChildSceneNode()->attachObject(ent);
+				ent->setMaterialName("BaseWhite");
+			}
 
-			// 3. Define the triangles (Indices)
-			// Front
-			cube->triangle(0, 3, 2);
-			cube->triangle(2, 1, 0);
-			// Right
-			cube->triangle(1, 2, 6);
-			cube->triangle(6, 5, 1);
-			// Back
-			cube->triangle(5, 6, 7);
-			cube->triangle(7, 4, 5);
-			// Left
-			cube->triangle(4, 7, 3);
-			cube->triangle(3, 0, 4);
-			// Top
-			cube->triangle(4, 0, 1);
-			cube->triangle(1, 5, 4);
-			// Bottom
-			cube->triangle(3, 7, 6);
-			cube->triangle(6, 2, 3);
-
-			cube->end();
-
-			// 4. Attach it to a SceneNode to see it
-			Ogre::SceneNode* cubeNode = scnMgr->getRootSceneNode()->createChildSceneNode();
-			cubeNode->attachObject(cube);
+//			{
+//
+//				Ogre::ResourceGroupManager::getSingleton().addResourceLocation(
+//    "C:\\Users\\sol\\source\\repos\\Journeyman-Game-Engine\\Engine",
+//    "FileSystem",
+//    Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME
+//);
+//				Ogre::MaterialPtr mat = Ogre::MaterialManager::getSingleton().create(
+//					"PlainWhiteX", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+//				Ogre::Pass* pass = mat->getTechnique(0)->getPass(0);
+//
+//				// Basic color settings (Fixed Function style)
+//				pass->setAmbient(Ogre::ColourValue::White);
+//				pass->setDiffuse(Ogre::ColourValue::White);
+//
+//				auto& shaderGen = Ogre::RTShader::ShaderGenerator::getSingleton();
+//
+//				// 1. Create the ManualObject
+//				Ogre::ManualObject* cube = scnMgr->createManualObject("UserCube");
+//
+//				// 2. Start defining the mesh using a material
+//				cube->begin("PlainWhiteX", Ogre::RenderOperation::OT_TRIANGLE_LIST);
+//
+//				// Define the 8 vertices of a cube
+//				// Front face
+//				cube->position(-5, 5, 5); // 0
+//				cube->position(5, 5, 5); // 1
+//				cube->position(5, -5, 5); // 2
+//				cube->position(-5, -5, 5); // 3
+//
+//				// Back face
+//				cube->position(-5, 5, -5); // 4
+//				cube->position(5, 5, -5); // 5
+//				cube->position(5, -5, -5); // 6
+//				cube->position(-5, -5, -5); // 7
+//
+//				// 3. Define the triangles (Indices)
+//				// Front
+//				cube->triangle(0, 3, 2);
+//				cube->triangle(2, 1, 0);
+//				// Right
+//				cube->triangle(1, 2, 6);
+//				cube->triangle(6, 5, 1);
+//				// Back
+//				cube->triangle(5, 6, 7);
+//				cube->triangle(7, 4, 5);
+//				// Left
+//				cube->triangle(4, 7, 3);
+//				cube->triangle(3, 0, 4);
+//				// Top
+//				cube->triangle(4, 0, 1);
+//				cube->triangle(1, 5, 4);
+//				// Bottom
+//				cube->triangle(3, 7, 6);
+//				cube->triangle(6, 2, 3);
+//
+//				cube->end();
+//
+//				// 4. Attach it to a SceneNode to see it
+//				Ogre::SceneNode* cubeNode = scnMgr->getRootSceneNode()->createChildSceneNode();
+//				cubeNode->attachObject(cube);
+//			}
 		}
 		catch (Ogre::Exception& e) {
 			std::cerr << "...................................................\n";
