@@ -10,14 +10,22 @@
 #include <string>
 #include <sstream>
 #include <iostream>
+#include <OgreRTShaderSystem.h>
 
 static SDL_Window* window = NULL;
 //static SDL_Renderer* renderer = NULL;
 Ogre::Root* root;
 Ogre::SceneManager* scnMgr;
 
+void SetupOgre() {
+
+}
+
+
 // Start function
 SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[]) {
+
+	// Create SDL Window
 	SDL_SetAppMetadata("Renderer Test", "0.1", "journeymanengine");
 
 	if (!SDL_Init(SDL_INIT_VIDEO)) {
@@ -33,7 +41,6 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[]) {
 	}
 
 	void* hwnd_ptr = (SDL_GetPointerProperty(SDL_GetWindowProperties(window), SDL_PROP_WINDOW_WIN32_HWND_POINTER, nullptr));
-	//std::uintptr_t hwnd = reinterpret_cast<std::uintptr_t>(hwnd_ptr);
 	HWND hwnd = static_cast<HWND>(hwnd_ptr);
 	Ogre::String windowHandleStr = Ogre::StringConverter::toString((size_t)hwnd);
 
@@ -49,38 +56,43 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[]) {
 		std::cerr << "Ogre Exception: " << e.getFullDescription() << std::endl;
 	}
 
-	
 	if (!root) {
 		return SDL_APP_FAILURE;
 	}
 
 	try {
+		// Set RenderSystem
 		auto* renderSystem = root->getRenderSystemByName("OpenGL Rendering Subsystem");
 		root->setRenderSystem(renderSystem);
 		root->initialise(false);
 
-
+		// Transfer Window from SDL TO Ogre
 		Ogre::NameValuePairList params;
 		params["externalWindowHandle"] = windowHandleStr;
 		Ogre::RenderWindow* ogreWin = root->createRenderWindow("Render Test Window", windowWidth, windowHeight, false, &params);
-
 		scnMgr = root->createSceneManager();
 
-		//if (Ogre::RTShader::ShaderGenerator::initialize()) {
-		//	Ogre::RTShader::ShaderGenerator* shadergen = Ogre::RTShader::ShaderGenerator::getSingletonPtr();
+		// Use OGRE_SDK from environment variables 
+		char* buffer = nullptr;
+		size_t size = 0;
+		if (_dupenv_s(&buffer, &size, "OGRE_SDK") == 0 && buffer != nullptr) {
+			//Ogre::ResourceGroupManager::getSingleton().addResourceLocation((std::string(buffer) +"\\Media"), "FileSystem", "General", true);
+			Ogre::ResourceGroupManager::getSingleton().addResourceLocation((std::string(buffer) + "\\Media\\Main"), "FileSystem", "Internal");
+			Ogre::ResourceGroupManager::getSingleton().addResourceLocation((std::string(buffer) + "\\Media\\RTShaderLib"), "FileSystem", "Internal", true);
+			Ogre::ResourceGroupManager::getSingleton().addResourceLocation((std::string(buffer) + "\\Samples\\Media\\models"), "FileSystem", "General", false, false);
+			Ogre::ResourceGroupManager::getSingleton().addResourceLocation((std::string(buffer) + "\\Samples\\Media\\materials\\scripts"), "FileSystem", "General", false, false);
+			Ogre::ResourceGroupManager::getSingleton().addResourceLocation((std::string(buffer) + "\\Samples\\Media\\materials\\textures"), "FileSystem", "General", false, false);
+			Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
 
-		//	// 2. Add the SceneManager to the generator
-		//	shadergen->addSceneManager(scnMgr);
+			free(buffer);
+		}
+		else {
+			return SDL_APP_FAILURE;
+		}
 
-		//	// 3. Make sure the RTSS knows where to find its own core shaders!
-		//	// These are usually in the /Media/RTShaderLib folder of the Ogre SDK
-		//	//Ogre::ResourceGroupManager::getSingleton().addResourceLocation("path/to/RTShaderLib", "FileSystem");
-		//}
-		//else {
-		//	throw std::exception("bad");
-		//}
 
-		scnMgr->setAmbientLight(Ogre::ColourValue::ColourValue(0.5, 0.0, 0.0));
+		// CREATE THE SCENE
+		scnMgr->setAmbientLight(Ogre::ColourValue::ColourValue(1.0, 1.0, 1.0));
 
 		Ogre::Light* light = scnMgr->createLight("MainLight");
 	    Ogre::SceneNode* lightNode = scnMgr->getRootSceneNode()->createChildSceneNode();
@@ -88,7 +100,7 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[]) {
 		lightNode->setPosition(0, 10, 15);
 
 	    Ogre::SceneNode* camNode = scnMgr->getRootSceneNode()->createChildSceneNode();
-		camNode->setPosition(0, 0, 15);
+		camNode->setPosition(0, 0, 100);
 	    camNode->lookAt(Ogre::Vector3(0, 0, -1), Ogre::Node::TS_PARENT);
 
 		Ogre::Camera* cam = scnMgr->createCamera("myCam");
@@ -98,24 +110,17 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[]) {
 
 		Ogre::Viewport* vp = ogreWin->addViewport(cam);
 		vp->setBackgroundColour(Ogre::ColourValue::ColourValue(0.2, 0.2 , 0.2));
-		
-		//if (Ogre::RTShader::ShaderGenerator::initialize())
-		//{
-		//	// Register the scene manager.
-		//	Ogre::RTShader::ShaderGenerator::getSingleton().addSceneManager(scnMgr);
-		//}
 
-		//Ogre::RTShader::ShaderGenerator* mShaderGenerator = Ogre::RTShader::ShaderGenerator::getSingletonPtr();
-		//mShaderGenerator->addSceneManager(scnMgr);
-		//// Apply the shader generated based techniques.
-		////vp->setMaterialScheme(Ogre::MSN_SHADERGEN);
-		//// Set the material scheme to the RTSS default
-		//vp->setMaterialScheme(Ogre::RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME);
-		Ogre::ConfigFile cf;
-		// Use your full path here as you already have it
-		cf.load("C:\\Users\\sol\\source\\repos\\Journeyman-Game-Engine\\bin\\Debug\\resources.cfg");
 
-		Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
+		// Create cube
+		Ogre::Entity* ent = scnMgr->createEntity("MyCube", "cube.mesh");
+		Ogre::SceneNode* node = scnMgr->createSceneNode("Node1");
+		node->setPosition(0, 0, 0);
+		scnMgr->getRootSceneNode()->addChild(node);
+		node->attachObject(ent);
+		node->setScale(0.4, 0.4, 0.4);
+		ent->setMaterialName("Examples/BeachStonesA");
+
 	}
 	catch (Ogre::Exception& e) {
 		std::cerr << "...................................................\n";
@@ -135,6 +140,62 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event)
 	if (event->type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
 
 		try {
+
+			//{
+			//	Ogre::ManualObject* man = scnMgr->createManualObject("test");
+			//	man->begin("Examples/BeachStonesA", Ogre::RenderOperation::OT_TRIANGLE_LIST);
+
+			//	man->position(-20, 20, 20);
+			//	man->normal(0, 0, 1);
+			//	man->textureCoord(0, 0);
+
+			//	man->position(-20, -20, 20);
+			//	man->normal(0, 0, 1);
+			//	man->textureCoord(0, 1);
+
+			//	man->position(20, -20, 20);
+			//	man->normal(0, 0, 1);
+			//	man->textureCoord(1, 1);
+
+			//	man->position(20, 20, 20);
+			//	man->normal(0, 0, 1);
+			//	man->textureCoord(1, 0);
+
+			//	man->quad(0, 1, 2, 3);
+
+			//	man->end();
+			//	scnMgr->getRootSceneNode()->createChildSceneNode()->attachObject(man);
+			//}
+
+			//{
+			//	Ogre::ManualObject* manual = scnMgr->createManualObject("Quad");
+			//	manual->begin("Examples/OgreLogo", Ogre::RenderOperation::OT_TRIANGLE_LIST);
+
+			//	manual->position(5.0, 0.0, 0.0);
+			//	manual->textureCoord(0, 1);
+			//	manual->position(-5.0, 10.0, 0.0);
+			//	manual->textureCoord(1, 0);
+			//	manual->position(-5.0, 0.0, 0.0);
+			//	manual->textureCoord(1, 1);
+			//	manual->position(5.0, 10.0, 0.0);
+			//	manual->textureCoord(0, 0);
+
+			//	manual->index(0);
+			//	manual->index(1);
+			//	manual->index(2);
+			//	manual->index(0);
+			//	manual->index(3);
+			//	manual->index(1);
+
+			//	manual->end();
+			//	manual->convertToMesh("Quad");
+
+			//	Ogre::Entity* ent = scnMgr->createEntity("Quad");
+			//	Ogre::SceneNode* node = scnMgr->getRootSceneNode()->createChildSceneNode("Node1");
+			//	node->attachObject(ent);
+
+			//}
+
 			//{
 			//	Ogre::Plane plane(Ogre::Vector3(0, 1, 0), -10);
 
@@ -145,37 +206,35 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event)
 			//	scnMgr->getRootSceneNode()->createChildSceneNode()->attachObject(ent);
 			//	ent->setMaterialName("PlainWhiteX");
 			//}
-			{
-				Ogre::MeshManager::getSingleton().createPlane(
-					"MyPlane",
-					Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
-					Ogre::Plane(Ogre::Vector3(0,1,0), -10), // Normal pointing up
-					20, 20, 1, 1,                        // Width, Height, Segments
-					true, 1, 5, 5,                         // Normals, TexCoords, U tile, V tile
-					Ogre::Vector3::UNIT_Z                  // Up vector
-				);
 
-				// Create the material
-				Ogre::MaterialPtr mat = Ogre::MaterialManager::getSingleton().create(
-					"PlaneMaterial",
-					Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME
-				);
+			//{
+			//	Ogre::MeshManager::getSingleton().createPlane(
+			//		"MyPlane",
+			//		Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+			//		Ogre::Plane(Ogre::Vector3(0,1,0), -10), // Normal pointing up
+			//		20, 20, 1, 1,                        // Width, Height, Segments
+			//		true, 1, 5, 5,                         // Normals, TexCoords, U tile, V tile
+			//		Ogre::Vector3::UNIT_Z                  // Up vector
+			//	);
 
-				// Set the diffuse color (e.g., a nice Blue)
-				Ogre::Pass* pass = mat->getTechnique(0)->getPass(0);
-				pass->setDiffuse(0.0, 0.5, 1.0, 1.0);
-				pass->setAmbient(0.1, 0.1, 0.1);
+			//	// Create the material
+			//	Ogre::MaterialPtr mat = Ogre::MaterialManager::getSingleton().create(
+			//		"PlaneMaterial",
+			//		Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME
+			//	);
 
-				// CRITICAL: Tell the material to use the RTSS generated technique
-				//mat->getTechnique(0)->setSchemeName(Ogre::RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME);
+			//	// Set the diffuse color (e.g., a nice Blue)
+			//	Ogre::Pass* pass = mat->getTechnique(0)->getPass(0);
+			//	pass->setDiffuse(0.0, 0.5, 1.0, 1.0);
+			//	pass->setAmbient(0.1, 0.1, 0.1);
 
-				Ogre::Entity* planeEnt = scnMgr->createEntity("PlaneEntity", "MyPlane");
-				planeEnt->setMaterialName("PlaneMaterial");
+			//	Ogre::Entity* planeEnt = scnMgr->createEntity("PlaneEntity", "MyPlane");
+			//	planeEnt->setMaterialName("PlaneMaterial");
 
-				Ogre::SceneNode* node = scnMgr->getRootSceneNode()->createChildSceneNode();
-				node->attachObject(planeEnt);
-				node->setPosition(Ogre::Vector3(0, 0, -30.0f));
-			}
+			//	Ogre::SceneNode* node = scnMgr->getRootSceneNode()->createChildSceneNode();
+			//	node->attachObject(planeEnt);
+			//	node->setPosition(Ogre::Vector3(0, 0, -30.0f));
+			//}
 		}
 		catch (Ogre::Exception& e) {
 			std::cerr << "...................................................\n";
@@ -194,6 +253,9 @@ SDL_AppResult SDL_AppIterate(void *appstate)
 	try {
 		if (root) {
 			root->renderOneFrame();
+
+			Ogre::SceneNode* node = scnMgr->getSceneNode("Node1");
+			node->yaw(Ogre::Radian(Ogre::Math::DegreesToRadians(0.01)));
 		}
 	}
 	catch (Ogre::Exception& e) {
