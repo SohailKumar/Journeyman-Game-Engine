@@ -12,15 +12,71 @@
 #include <iostream>
 #include <OgreRTShaderSystem.h>
 
+#include "PhysicsObjectFactory.h"
+#include "PhysicsObject.h"
+
 static SDL_Window* window = NULL;
 //static SDL_Renderer* renderer = NULL;
 Ogre::Root* root;
 Ogre::SceneManager* scnMgr;
+PhysicsObjectFactory* factory;
 
-void SetupOgre() {
+std::list<PhysicsObject*> PhysicsObjects;
 
+int SetupOgre(Ogre::String windowHandleStr, unsigned int windowWidth, unsigned int windowHeight) {
+	// Set RenderSystem
+	auto* renderSystem = root->getRenderSystemByName("OpenGL Rendering Subsystem");
+	root->setRenderSystem(renderSystem);
+	root->initialise(false);
+
+	// Transfer Window from SDL TO Ogre
+	Ogre::NameValuePairList params;
+	params["externalWindowHandle"] = windowHandleStr;
+	Ogre::RenderWindow* ogreWin = root->createRenderWindow("Render Test Window", windowWidth, windowHeight, false, &params);
+	scnMgr = root->createSceneManager();
+
+	factory = new PhysicsObjectFactory();
+	Ogre::Root::getSingleton().addMovableObjectFactory(factory);
+
+	// Use OGRE_SDK from environment variables 
+	char* buffer = nullptr;
+	size_t size = 0;
+	if (_dupenv_s(&buffer, &size, "OGRE_SDK") == 0 && buffer != nullptr) {
+		//Ogre::ResourceGroupManager::getSingleton().addResourceLocation((std::string(buffer) +"\\Media"), "FileSystem", "General", false);
+		Ogre::ResourceGroupManager::getSingleton().addResourceLocation("media", "FileSystem", "Internal");
+		Ogre::ResourceGroupManager::getSingleton().addResourceLocation((std::string(buffer) + "\\Media\\Main"), "FileSystem", "Internal");
+		Ogre::ResourceGroupManager::getSingleton().addResourceLocation((std::string(buffer) + "\\Media\\RTShaderLib"), "FileSystem", "Internal", false);
+		Ogre::ResourceGroupManager::getSingleton().addResourceLocation((std::string(buffer) + "\\Samples\\Media\\models"), "FileSystem", "General", false, false);
+		Ogre::ResourceGroupManager::getSingleton().addResourceLocation((std::string(buffer) + "\\Samples\\Media\\materials\\scripts"), "FileSystem", "General", false, false);
+		Ogre::ResourceGroupManager::getSingleton().addResourceLocation((std::string(buffer) + "\\Samples\\Media\\materials\\textures"), "FileSystem", "General", false, false);
+		Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
+
+		free(buffer);
+	}
+	else {
+		return SDL_APP_FAILURE;
+	}
+
+	// Setup Standard Scene Objects
+	scnMgr->setAmbientLight(Ogre::ColourValue::ColourValue(1.0, 1.0, 1.0));
+
+	Ogre::Light* light = scnMgr->createLight("MainLight");
+	Ogre::SceneNode* lightNode = scnMgr->getRootSceneNode()->createChildSceneNode();
+	lightNode->attachObject(light);
+	lightNode->setPosition(0, 10, 15);
+
+	Ogre::SceneNode* camNode = scnMgr->getRootSceneNode()->createChildSceneNode();
+	camNode->setPosition(0, 0, 100);
+	camNode->lookAt(Ogre::Vector3(0, 0, -1), Ogre::Node::TS_PARENT);
+
+	Ogre::Camera* cam = scnMgr->createCamera("myCam");
+	cam->setNearClipDistance(5); // specific to this sample
+	cam->setAutoAspectRatio(false);
+	camNode->attachObject(cam);
+
+	Ogre::Viewport* vp = ogreWin->addViewport(cam);
+	vp->setBackgroundColour(Ogre::ColourValue::ColourValue(0.2, 0.2, 0.2));
 }
-
 
 // Start function
 SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[]) {
@@ -61,66 +117,40 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[]) {
 	}
 
 	try {
-		// Set RenderSystem
-		auto* renderSystem = root->getRenderSystemByName("OpenGL Rendering Subsystem");
-		root->setRenderSystem(renderSystem);
-		root->initialise(false);
-
-		// Transfer Window from SDL TO Ogre
-		Ogre::NameValuePairList params;
-		params["externalWindowHandle"] = windowHandleStr;
-		Ogre::RenderWindow* ogreWin = root->createRenderWindow("Render Test Window", windowWidth, windowHeight, false, &params);
-		scnMgr = root->createSceneManager();
-
-		// Use OGRE_SDK from environment variables 
-		char* buffer = nullptr;
-		size_t size = 0;
-		if (_dupenv_s(&buffer, &size, "OGRE_SDK") == 0 && buffer != nullptr) {
-			//Ogre::ResourceGroupManager::getSingleton().addResourceLocation((std::string(buffer) +"\\Media"), "FileSystem", "General", true);
-			Ogre::ResourceGroupManager::getSingleton().addResourceLocation((std::string(buffer) + "\\Media\\Main"), "FileSystem", "Internal");
-			Ogre::ResourceGroupManager::getSingleton().addResourceLocation((std::string(buffer) + "\\Media\\RTShaderLib"), "FileSystem", "Internal", true);
-			Ogre::ResourceGroupManager::getSingleton().addResourceLocation((std::string(buffer) + "\\Samples\\Media\\models"), "FileSystem", "General", false, false);
-			Ogre::ResourceGroupManager::getSingleton().addResourceLocation((std::string(buffer) + "\\Samples\\Media\\materials\\scripts"), "FileSystem", "General", false, false);
-			Ogre::ResourceGroupManager::getSingleton().addResourceLocation((std::string(buffer) + "\\Samples\\Media\\materials\\textures"), "FileSystem", "General", false, false);
-			Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
-
-			free(buffer);
-		}
-		else {
-			return SDL_APP_FAILURE;
-		}
-
+		SetupOgre(windowHandleStr, windowWidth, windowHeight);
 
 		// CREATE THE SCENE
-		scnMgr->setAmbientLight(Ogre::ColourValue::ColourValue(1.0, 1.0, 1.0));
+		Ogre::Entity* ent_1 = scnMgr->createEntity("Cube_1", "cube.mesh");
+		Ogre::SceneNode* node_1 = scnMgr->createSceneNode("Node_1");
+		PhysicsObject* physObj_1 = static_cast<PhysicsObject*>(
+			scnMgr->createMovableObject("PhysicsObject1", "PhysicsObject"));
+		scnMgr->getRootSceneNode()->addChild(node_1);
+		node_1->attachObject(ent_1);
+		node_1->attachObject(physObj_1);
 
-		Ogre::Light* light = scnMgr->createLight("MainLight");
-	    Ogre::SceneNode* lightNode = scnMgr->getRootSceneNode()->createChildSceneNode();
-	    lightNode->attachObject(light);
-		lightNode->setPosition(0, 10, 15);
+		node_1->pitch(Ogre::Radian(Ogre::Math::DegreesToRadians(90))); // TEMP
 
-	    Ogre::SceneNode* camNode = scnMgr->getRootSceneNode()->createChildSceneNode();
-		camNode->setPosition(0, 0, 100);
-	    camNode->lookAt(Ogre::Vector3(0, 0, -1), Ogre::Node::TS_PARENT);
+		node_1->setScale(0.4, 0.4, 0.4);
+		physObj_1->setEntity(ent_1);
+		node_1->setPosition(-25, 0, 0);
+		ent_1->setMaterialName("Plain"); // Plain or Highlight
+		PhysicsObjects.push_front(physObj_1);
 
-		Ogre::Camera* cam = scnMgr->createCamera("myCam");
-		cam->setNearClipDistance(5); // specific to this sample
-		cam->setAutoAspectRatio(true);
-		camNode->attachObject(cam);
+		Ogre::Entity* ent_2 = scnMgr->createEntity("Cube_2", "cube.mesh");
+		Ogre::SceneNode* node_2 = scnMgr->createSceneNode("Node_2");
+		PhysicsObject* physObj_2 = static_cast<PhysicsObject*>(
+			scnMgr->createMovableObject("PhysicsObject2", "PhysicsObject"));
+		scnMgr->getRootSceneNode()->addChild(node_2);
+		node_2->attachObject(ent_2);
+		node_2->attachObject(physObj_2);
 
-		Ogre::Viewport* vp = ogreWin->addViewport(cam);
-		vp->setBackgroundColour(Ogre::ColourValue::ColourValue(0.2, 0.2 , 0.2));
+		node_2->pitch(Ogre::Radian(Ogre::Math::DegreesToRadians(90))); // TEMP
 
-
-		// Create cube
-		Ogre::Entity* ent = scnMgr->createEntity("MyCube", "cube.mesh");
-		Ogre::SceneNode* node = scnMgr->createSceneNode("Node1");
-		node->setPosition(0, 0, 0);
-		scnMgr->getRootSceneNode()->addChild(node);
-		node->attachObject(ent);
-		node->setScale(0.4, 0.4, 0.4);
-		ent->setMaterialName("Examples/BeachStonesA");
-
+		node_2->setScale(0.4, 0.4, 0.4); 
+		physObj_2->setEntity(ent_2);
+		node_2->setPosition(25, 0, 0);
+		ent_2->setMaterialName("Plain"); // Plain or Highlight
+		PhysicsObjects.push_front(physObj_2);
 	}
 	catch (Ogre::Exception& e) {
 		std::cerr << "...................................................\n";
@@ -199,7 +229,7 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event)
 			//{
 			//	Ogre::Plane plane(Ogre::Vector3(0, 1, 0), -10);
 
-			//	Ogre::MeshManager::getSingleton().createPlane("plane", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, plane, 1500, 1500, 20, 20, true, 1, 5, 20, Ogre::Vector3::UNIT_Z);
+			//	Ogre::MeshManager::getSingleton().createPlane("plane", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, plane, 1500, 1500, 20, 20, false, 1, 5, 20, Ogre::Vector3::UNIT_Z);
 
 			//	Ogre::Entity* ent = scnMgr->createEntity("Name Of Plane", "plane");
 
@@ -213,7 +243,7 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event)
 			//		Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
 			//		Ogre::Plane(Ogre::Vector3(0,1,0), -10), // Normal pointing up
 			//		20, 20, 1, 1,                        // Width, Height, Segments
-			//		true, 1, 5, 5,                         // Normals, TexCoords, U tile, V tile
+			//		false, 1, 5, 5,                         // Normals, TexCoords, U tile, V tile
 			//		Ogre::Vector3::UNIT_Z                  // Up vector
 			//	);
 
@@ -254,8 +284,20 @@ SDL_AppResult SDL_AppIterate(void *appstate)
 		if (root) {
 			root->renderOneFrame();
 
-			Ogre::SceneNode* node = scnMgr->getSceneNode("Node1");
-			node->yaw(Ogre::Radian(Ogre::Math::DegreesToRadians(0.01)));
+			// 
+			for (std::list<PhysicsObject*>::iterator obj = PhysicsObjects.begin(); obj != PhysicsObjects.end(); ++obj) {
+				(*obj)->Move();
+			}
+
+			// Temporary: We ask if each object is colliding with every other object in the scene
+			for (std::list<PhysicsObject*>::iterator i = PhysicsObjects.begin(); i != PhysicsObjects.end(); ++i) {
+				for (std::list<PhysicsObject*>::iterator j = PhysicsObjects.begin(); j != PhysicsObjects.end(); ++j) {
+					if (i != j)
+					{
+						(*i)->CheckCollision((*j));
+					}
+				}
+			}
 		}
 	}
 	catch (Ogre::Exception& e) {

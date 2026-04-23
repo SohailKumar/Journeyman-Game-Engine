@@ -9,7 +9,7 @@ class KeyHandler : public OgreBites::InputListener
         {
             Ogre::Root::getSingleton().queueEndRendering();
         }
-        return true;
+        return false;
     }
 };
 
@@ -43,7 +43,7 @@ class KeyHandler : public OgreBites::InputListener
 //    // create the camera
 //    Ogre::Camera* cam = scnMgr->createCamera("myCam");
 //    cam->setNearClipDistance(5); // specific to this sample
-//    cam->setAutoAspectRatio(true);
+//    cam->setAutoAspectRatio(false);
 //    camNode->attachObject(cam);
 //
 //    // and tell it to render into the main window
