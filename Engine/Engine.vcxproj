@@ -136,14 +136,14 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)external\SDL3\include;$(SolutionDir)External\OgreDirectories\OgreMain\include;$(SolutionDir)External\OgreDirectories\Build\include;$(SolutionDir)External\OgreDirectories\Bites\include;$(SolutionDir)External\OgreDirectories\RTShaderSystem\include;$(SolutionDir)External\glm-1.0.3\glm</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)external\SDL3\include;$(SolutionDir)External\glm-1.0.3\glm;$(OGRE_SDK)\OgreMain\include;$(OGRE_SDK)\Build\imgui-1.91.9b;$(OGRE_SDK)\Components\Overlay\include;$(OGRE_SDK)\Components\Bites\include;$(OGRE_SDK)\Build\include;$(OGRE_SDK)\Components\RTShaderSystem\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ShowProgress>LinkVerboseICF</ShowProgress>
-      <AdditionalLibraryDirectories>$(SolutionDir)external\SDL3\lib;$(SolutionDir)external\OgreDirectories\LibDirectories\lib_d</AdditionalLibraryDirectories>
-      <AdditionalDependencies>$(SolutionDir)external\SDL3\lib\$(PlatformTarget)\SDL3.lib;OgreMain_d.lib;OgreBites_d.lib;OgreRTShaderSystem_d.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)external\SDL3\lib;$(OGRE_SDK)\Build\lib\Debug</AdditionalLibraryDirectories>
+      <AdditionalDependencies>$(SolutionDir)external\SDL3\lib\$(PlatformTarget)\SDL3.lib;OgreMain_d.lib;OgreRTShaderSystem_d.lib;OgreOverlay_d.lib</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>xcopy "$(SolutionDir)External\SDL3\lib\$(PlatformTarget)\SDL3.dll" "$(OutDir)" /i /y</Command>
@@ -157,14 +157,14 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)external\SDL3\include;$(SolutionDir)External\OgreDirectories\OgreMain\include;$(SolutionDir)External\OgreDirectories\Build\include;$(SolutionDir)External\OgreDirectories\Bites\include;$(SolutionDir)External\OgreDirectories\RTShaderSystem\include;$(SolutionDir)External\glm-1.0.3\glm</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)external\SDL3\include;$(SolutionDir)External\glm-1.0.3\glm;$(OGRE_SDK)\OgreMain\include;$(OGRE_SDK)\Build\imgui-1.91.9b;$(OGRE_SDK)\Components\Overlay\include;$(OGRE_SDK)\Components\Bites\include;$(OGRE_SDK)\Build\include;$(OGRE_SDK)\Components\RTShaderSystem\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ShowProgress>LinkVerboseICF</ShowProgress>
-      <AdditionalLibraryDirectories>$(SolutionDir)external\SDL3\lib;$(SolutionDir)external\OgreDirectories\LibDirectories\lib</AdditionalLibraryDirectories>
-      <AdditionalDependencies>$(SolutionDir)external\SDL3\lib\$(PlatformTarget)\SDL3.lib;OgreMain.lib;OgreBites.lib;OgreRTShaderSystem.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)external\SDL3\lib;$(OGRE_SDK)\Build\lib\RelWithDebInfo</AdditionalLibraryDirectories>
+      <AdditionalDependencies>$(SolutionDir)external\SDL3\lib\$(PlatformTarget)\SDL3.lib;OgreMain.lib;OgreRTShaderSystem.lib;OgreOverlay.lib</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>xcopy "$(SolutionDir)External\SDL3\lib\$(PlatformTarget)\SDL3.dll" "$(OutDir)" /i /y</Command>
