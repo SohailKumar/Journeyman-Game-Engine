@@ -128,16 +128,21 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[]) {
 
 		SetupOgre(windowHandleStr, windowWidth, windowHeight);
 
-		//scnMgr->addRenderQueueListener(mOverlaySystem);
-		//Ogre::ImGuiOverlay* imguiOverlay = new Ogre::ImGuiOverlay();
-		//Ogre::OverlayManager* overlayManager = Ogre::OverlayManager::getSingletonPtr();
-		//if (overlayManager)
-		//{ overlayManager->addOverlay(imguiOverlay); }
+		scnMgr->addRenderQueueListener(mOverlaySystem);
+		Ogre::ImGuiOverlay* imguiOverlay = new Ogre::ImGuiOverlay();
+		Ogre::OverlayManager* overlayManager = Ogre::OverlayManager::getSingletonPtr();
+		float vpScale = 1.0f;
+		if (overlayManager)
+		{	overlayManager->addOverlay(imguiOverlay); 
+			vpScale = overlayManager->getPixelRatio();
+		}
 
-		//ImGui::CreateContext();
-		//ImGui_ImplSDL3_InitForOther(window);
+		ImGui::CreateContext();
+		ImGui::GetIO().FontGlobalScale = std::round(vpScale); // default font does not work with fractional scaling
+		imguiOverlay->setZOrder(300);
+		imguiOverlay->show();
 
-		//imguiOverlay->show();
+		ImGui_ImplSDL3_InitForOther(window);
 
 		// CREATE THE SCENE
 		Ogre::Entity* ent_1 = scnMgr->createEntity("Cube_1", "cube.mesh");
@@ -183,6 +188,8 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[]) {
 // Runs on events (mouse input, keypresses, etc)
 SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event) 
 {
+	ImGui_ImplSDL3_ProcessEvent(event);
+
 	if (event->type == SDL_EVENT_QUIT) {
 		return SDL_APP_SUCCESS;
 	}
@@ -302,6 +309,13 @@ SDL_AppResult SDL_AppIterate(void *appstate)
 {
 	try {
 		if (root) {
+			ImGui_ImplSDL3_NewFrame();
+			Ogre::ImGuiOverlay::NewFrame();
+
+			ImGui::Begin("Random Window");
+			ImGui::Text("Hello SDL3 and Ogre!");
+			ImGui::End();
+
 			root->renderOneFrame();
 
 			// 
@@ -342,5 +356,6 @@ SDL_AppResult SDL_AppIterate(void *appstate)
 
 void SDL_AppQuit(void* appstate, SDL_AppResult result) 
 {
-
+	ImGui_ImplSDL3_Shutdown();
+	ImGui::DestroyContext();
 }
