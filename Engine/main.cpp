@@ -4,9 +4,14 @@
 #include <cstdio>
 #include <wtypes.h>
 #include <OgreRenderSystem.h>
-#include <OgreImGuiOverlay.h>
 #include <Ogre.h>
 #include "OgreRoot.h"
+
+//overlay
+#include <OgreImGuiOverlay.h>
+#include <OgreOverlaySystem.h>
+#include <OgreOverlayManager.h>
+#include "imgui_impl_sdl3.h"
 
 #include <string>
 #include <sstream>
@@ -119,10 +124,20 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[]) {
 	}
 
 	try {
+		Ogre::OverlaySystem* mOverlaySystem = new Ogre::OverlaySystem();
+
 		SetupOgre(windowHandleStr, windowWidth, windowHeight);
 
-		
-		Ogre::ImGuiOverlay* imguiOverlay = new Ogre::ImGuiOverlay();
+		//scnMgr->addRenderQueueListener(mOverlaySystem);
+		//Ogre::ImGuiOverlay* imguiOverlay = new Ogre::ImGuiOverlay();
+		//Ogre::OverlayManager* overlayManager = Ogre::OverlayManager::getSingletonPtr();
+		//if (overlayManager)
+		//{ overlayManager->addOverlay(imguiOverlay); }
+
+		//ImGui::CreateContext();
+		//ImGui_ImplSDL3_InitForOther(window);
+
+		//imguiOverlay->show();
 
 		// CREATE THE SCENE
 		Ogre::Entity* ent_1 = scnMgr->createEntity("Cube_1", "cube.mesh");
