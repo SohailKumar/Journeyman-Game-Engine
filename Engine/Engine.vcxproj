@@ -136,17 +136,18 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)external\SDL3\include;$(SolutionDir)External\glm-1.0.3\glm;$(OGRE_SDK)\OgreMain\include;$(OGRE_SDK)\Build\imgui-1.91.9b;$(OGRE_SDK)\Components\Overlay\include;$(OGRE_SDK)\Components\Bites\include;$(OGRE_SDK)\Build\include;$(OGRE_SDK)\Components\RTShaderSystem\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)external\SDL3\include;$(SolutionDir)external\glm-1.0.3\glm;$(ProjectDir)imgui;$(OGRE_SDK)\OgreMain\include;$(OGRE_SDK)\Build\imgui-1.91.9b;$(OGRE_SDK)\Components\Overlay\include;$(OGRE_SDK)\Components\Bites\include;$(OGRE_SDK)\Build\include;$(OGRE_SDK)\Components\RTShaderSystem\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ShowProgress>LinkVerboseICF</ShowProgress>
-      <AdditionalLibraryDirectories>$(SolutionDir)external\SDL3\lib;$(OGRE_SDK)\Build\lib\Debug</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)external\SDL3\lib;$(OGRE_SDK)\Build\lib\$(Configuration)</AdditionalLibraryDirectories>
       <AdditionalDependencies>$(SolutionDir)external\SDL3\lib\$(PlatformTarget)\SDL3.lib;OgreMain_d.lib;OgreRTShaderSystem_d.lib;OgreOverlay_d.lib</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy "$(SolutionDir)External\SDL3\lib\$(PlatformTarget)\SDL3.dll" "$(OutDir)" /i /y</Command>
+      <Command>xcopy "$(SolutionDir)External\SDL3\lib\$(PlatformTarget)\SDL3.dll" "$(OutDir)" /i /y /d
+xcopy "$(OGRE_SDK)\Build\bin\$(Configuration)" "$(OutDir)" /i /y /d</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -157,20 +158,22 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)external\SDL3\include;$(SolutionDir)External\glm-1.0.3\glm;$(OGRE_SDK)\OgreMain\include;$(OGRE_SDK)\Build\imgui-1.91.9b;$(OGRE_SDK)\Components\Overlay\include;$(OGRE_SDK)\Components\Bites\include;$(OGRE_SDK)\Build\include;$(OGRE_SDK)\Components\RTShaderSystem\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)external\SDL3\include;$(SolutionDir)external\glm-1.0.3\glm;$(ProjectDir)imgui;$(OGRE_SDK)\OgreMain\include;$(OGRE_SDK)\Build\imgui-1.91.9b;$(OGRE_SDK)\Components\Overlay\include;$(OGRE_SDK)\Components\Bites\include;$(OGRE_SDK)\Build\include;$(OGRE_SDK)\Components\RTShaderSystem\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ShowProgress>LinkVerboseICF</ShowProgress>
-      <AdditionalLibraryDirectories>$(SolutionDir)external\SDL3\lib;$(OGRE_SDK)\Build\lib\RelWithDebInfo</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)external\SDL3\lib;$(OGRE_SDK)\Build\lib\$(Configuration)</AdditionalLibraryDirectories>
       <AdditionalDependencies>$(SolutionDir)external\SDL3\lib\$(PlatformTarget)\SDL3.lib;OgreMain.lib;OgreRTShaderSystem.lib;OgreOverlay.lib</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy "$(SolutionDir)External\SDL3\lib\$(PlatformTarget)\SDL3.dll" "$(OutDir)" /i /y</Command>
+      <Command>xcopy "$(SolutionDir)External\SDL3\lib\$(PlatformTarget)\SDL3.dll" "$(OutDir)" /i /y /d
+xcopy "$(OGRE_SDK)\Build\bin\$(Configuration)" "$(OutDir)" /i /y /d</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="imgui\imgui_impl_sdl3.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="OgreUtil.cpp" />
     <ClCompile Include="PhysicsObject.cpp" />
@@ -188,6 +191,7 @@
     <None Include="plain.material" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="imgui\imgui_impl_sdl3.h" />
     <ClInclude Include="PhysicsObject.h" />
     <ClInclude Include="PhysicsObjectFactory.h" />
   </ItemGroup>
