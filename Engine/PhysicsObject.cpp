@@ -1,11 +1,14 @@
 #include "PhysicsObject.h"
 #include <glm/glm.hpp>
 
-// SAT implementation taken from Chris Ericson's textbook "Real Time Collision Detection"
+// SAT implementation taken from Chris Ericson's textbook "Real Time Collision Detection": https://ceng2.ktu.edu.tr/~cakir/files/grafikler/rtcd.pdf
 
 PhysicsObject::PhysicsObject(const Ogre::String & name) : Ogre::MovableObject(name)
 {
-
+	Mass = 1.0f;
+	Velocity = Ogre::Vector3(0.0f);
+	Constant = Ogre::Vector3(0.0f);
+	Signal = Ogre::Vector3(0.0f);
 }
 
 PhysicsObject::~PhysicsObject() {}
@@ -38,24 +41,55 @@ void PhysicsObject::visitRenderables(Ogre::Renderable::Visitor* visitor,
 
 }
 
-void PhysicsObject::Move()
+void PhysicsObject::ApplyForce(Ogre::Vector3 force, ForceMode mode)
 {
-    getParentNode()->yaw(Ogre::Radian(Ogre::Math::DegreesToRadians(0.005))); // TEMP
+	switch (mode)
+	{
+		case Force: Constant += force / Mass;
+			break;
+		case Acceleration: Constant += force;
+			break;
+		case Impulse: Signal += force / Mass;
+			break;
+		case VelocityChange: Signal += force;
+			break;
+	}
+}
+
+void PhysicsObject::Update(float deltaTime)
+{
+	if (!IsStatic)
+	{
+		ApplyForce(GRAVITY_CONSTANT, Acceleration);
+
+		Velocity += (Constant * deltaTime) + Signal;
+
+		getParentSceneNode()->translate(Velocity);
+
+		Constant = Ogre::Vector3(0.0f, 0.0f, 0.0f);
+		Signal = Ogre::Vector3(0.0f, 0.0f, 0.0f);
+	}
 }
 
 bool PhysicsObject::CheckCollision(PhysicsObject* other)
 {
     // A simple AABB check to see if they are even close to each other
-    if (mEntity->getWorldBoundingBox().intersects(other->mEntity->getWorldBoundingBox()))
+    if (!IsStatic && mEntity->getWorldBoundingBox().intersects(other->mEntity->getWorldBoundingBox()))
     {
 		if (SAT(other))
 		{
-			mEntity->setMaterialName("Highlight"); // TEMP
+			Ogre::Vector3 rebound = (GetWorldPosition() - other->GetWorldPosition());
+
+			rebound.Ogre::Vector3::normalise();
+			float mag = Velocity.Ogre::Vector3::length();
+
+			ApplyForce(-Velocity, VelocityChange);
+			ApplyForce(rebound * mag, Impulse);
+
 			return true;
 		}
     }
 
-    mEntity->setMaterialName("Plain"); // TEMP
     return false;
 }
 

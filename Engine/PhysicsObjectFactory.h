@@ -1,8 +1,6 @@
 #pragma once
 #include "PhysicsObject.h"
-
-// NOTE: it is reccommended to use a factory to create custom MovableObjects instead of...
-// ... initialing them in main. This was taking from one example
+#include "OgreRoot.h"
 
 class PhysicsObjectFactory : public Ogre::MovableObjectFactory {
 public:
@@ -21,4 +19,14 @@ public:
     {
         return new PhysicsObject(name);
     }
+
+    void createObject(Ogre::SceneManager* scnMgr, Ogre::Vector3 position, bool isStatic = false,
+        Ogre::Vector3 scale = Ogre::Vector3(1.0f));
+
+    void Update(float deltaTime);
+
+private:
+    int index;
+
+    std::list<PhysicsObject*> PhysicsObjects;
 };
