@@ -125,14 +125,28 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[]) {
 
 		// CREATE THE SCENE
 
-		factory->createObject(scnMgr, Ogre::Vector3(-25, 0, 0), false, Ogre::Vector3(0.1f));
+		factory->createObject(scnMgr, Ogre::Vector3(-30, 10, 0), false, Ogre::Vector3(0.1f));
 
-		factory->createObject(scnMgr, Ogre::Vector3(25, 0, 0), false, Ogre::Vector3(0.1f));
+		factory->createObject(scnMgr, Ogre::Vector3(30, 10, 0), false, Ogre::Vector3(0.1f));
 
-		// My really terrible floor to deal with a pseudo collision detection
-		for (int i = 0; i < 10; i++)
+		factory->createObject(scnMgr, Ogre::Vector3(-20, 0, 0), false, Ogre::Vector3(0.1f));
+
+		factory->createObject(scnMgr, Ogre::Vector3(20, 0, 0), false, Ogre::Vector3(0.1f));
+
+		// My really terrible floor ceiling to deal with a pseudo collision detection
+		for (int i = 0; i < 21; i++)
 		{
-			factory->createObject(scnMgr, Ogre::Vector3(-50 + i * 10 , -50, 0), true, Ogre::Vector3(0.1f, 0.1f, 0.1f));
+			factory->createObject(scnMgr, Ogre::Vector3(-100 + i * 10 , -70, 0), true, Ogre::Vector3(0.1f, 0.1f, 0.1f));
+
+			factory->createObject(scnMgr, Ogre::Vector3(-100 + i * 10, 70, 0), true, Ogre::Vector3(0.1f, 0.1f, 0.1f));
+		}
+
+		// My really terrible floor ceiling to deal with a pseudo collision detection
+		for (int i = 0; i < 13; i++)
+		{
+			factory->createObject(scnMgr, Ogre::Vector3(-100, 60 - 10 * i, 0), true, Ogre::Vector3(0.1f, 0.1f, 0.1f));
+
+			factory->createObject(scnMgr, Ogre::Vector3(100, 60 - 10 * i, 0), true, Ogre::Vector3(0.1f, 0.1f, 0.1f));
 		}
 
 	}

@@ -25,6 +25,11 @@ public:
 
     void Update(float deltaTime);
 
+    void ClearObjects()
+    {
+        PhysicsObjects.clear();
+    }
+
 private:
     int index;
 

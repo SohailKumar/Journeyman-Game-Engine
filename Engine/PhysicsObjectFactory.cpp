@@ -26,7 +26,7 @@ void PhysicsObjectFactory::createObject(Ogre::SceneManager* scnMgr, Ogre::Vector
     node->setScale(scale);
     physObj->Initialize(ent, isStatic);
     node->setPosition(position);
-    ent->setMaterialName("Plain"); // Plain or Highlight
+    ent->setMaterialName(isStatic ? "Plain" : "Highlight"); // Plain or Highlight
 
     index += 1;
 
@@ -35,7 +35,6 @@ void PhysicsObjectFactory::createObject(Ogre::SceneManager* scnMgr, Ogre::Vector
 
 void PhysicsObjectFactory::Update(float deltaTime)
 {
-
     // We update the transform data of each object in the scene
     for (std::list<PhysicsObject*>::iterator obj = PhysicsObjects.begin(); obj != PhysicsObjects.end(); ++obj) {
         (*obj)->Update(deltaTime);
@@ -46,7 +45,11 @@ void PhysicsObjectFactory::Update(float deltaTime)
         for (std::list<PhysicsObject*>::iterator j = PhysicsObjects.begin(); j != PhysicsObjects.end(); ++j) {
             if (i != j)
             {
-                (*i)->CheckCollision((*j));
+                if ((*i)->CheckCollision((*j)))
+                {
+                    // Focus on a single collision each frame. It's inaccurate but oh well
+                    break;
+                }
             }
         }
     }

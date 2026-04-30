@@ -84,7 +84,7 @@ bool PhysicsObject::CheckCollision(PhysicsObject* other)
 			float mag = Velocity.Ogre::Vector3::length();
 
 			ApplyForce(-Velocity, VelocityChange);
-			ApplyForce(rebound * mag, Impulse);
+			ApplyForce(rebound * mag * 0.98, Impulse);
 
 			return true;
 		}

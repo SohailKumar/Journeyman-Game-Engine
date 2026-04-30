@@ -68,6 +68,10 @@ public:
     Ogre::Vector3 GetWorldPosition() { return getParentSceneNode()->_getDerivedPosition(); }
     Ogre::Matrix4 GetWorldMatrix() { return getParentSceneNode()->_getFullTransform(); }
 
+    void Translate(Ogre::Vector3 position) { getParentSceneNode()->translate(position); }
+    void Rotate(Ogre::Quaternion q) { getParentSceneNode()->rotate(q); }
+    void Scale(Ogre::Vector3 size) { getParentSceneNode()->scale(size); }
+
 private:
     bool IsStatic;
     float Mass;
