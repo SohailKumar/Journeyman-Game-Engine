@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <wtypes.h>
 #include <OgreRenderSystem.h>
+#include <OgreImGuiOverlay.h>
 #include <Ogre.h>
 #include "OgreRoot.h"
 #include <chrono>
@@ -11,7 +12,7 @@
 #include <string>
 #include <sstream>
 #include <iostream>
-#include <OgreRTShaderSystem.h>
+//#include <OgreRTShaderSystem.h>
 
 #include "PhysicsObjectFactory.h"
 #include "PhysicsObject.h"
@@ -100,6 +101,7 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[]) {
 
 	TimePoint = std::chrono::steady_clock::now();
 
+	// Get Window Handle for Ogre
 	void* hwnd_ptr = (SDL_GetPointerProperty(SDL_GetWindowProperties(window), SDL_PROP_WINDOW_WIN32_HWND_POINTER, nullptr));
 	HWND hwnd = static_cast<HWND>(hwnd_ptr);
 	Ogre::String windowHandleStr = Ogre::StringConverter::toString((size_t)hwnd);
@@ -122,6 +124,9 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[]) {
 
 	try {
 		SetupOgre(windowHandleStr, windowWidth, windowHeight);
+
+		
+		Ogre::ImGuiOverlay* imguiOverlay = new Ogre::ImGuiOverlay();
 
 		// CREATE THE SCENE
 
