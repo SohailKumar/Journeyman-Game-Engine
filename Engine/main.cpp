@@ -7,6 +7,7 @@
 #include <OgreImGuiOverlay.h>
 #include <Ogre.h>
 #include "OgreRoot.h"
+#include <chrono>
 
 #include <string>
 #include <sstream>
@@ -22,6 +23,7 @@ Ogre::Root* root;
 Ogre::SceneManager* scnMgr;
 PhysicsObjectFactory* factory;
 
+std::chrono::steady_clock::time_point TimePoint;
 std::list<PhysicsObject*> PhysicsObjects;
 
 int SetupOgre(Ogre::String windowHandleStr, unsigned int windowWidth, unsigned int windowHeight) {
@@ -67,7 +69,7 @@ int SetupOgre(Ogre::String windowHandleStr, unsigned int windowWidth, unsigned i
 	lightNode->setPosition(0, 10, 15);
 
 	Ogre::SceneNode* camNode = scnMgr->getRootSceneNode()->createChildSceneNode();
-	camNode->setPosition(0, 0, 100);
+	camNode->setPosition(0, 0, 200);
 	camNode->lookAt(Ogre::Vector3(0, 0, -1), Ogre::Node::TS_PARENT);
 
 	Ogre::Camera* cam = scnMgr->createCamera("myCam");
@@ -97,6 +99,8 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[]) {
 		return SDL_APP_FAILURE;
 	}
 
+	TimePoint = std::chrono::steady_clock::now();
+
 	// Get Window Handle for Ogre
 	void* hwnd_ptr = (SDL_GetPointerProperty(SDL_GetWindowProperties(window), SDL_PROP_WINDOW_WIN32_HWND_POINTER, nullptr));
 	HWND hwnd = static_cast<HWND>(hwnd_ptr);
@@ -125,37 +129,31 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[]) {
 		Ogre::ImGuiOverlay* imguiOverlay = new Ogre::ImGuiOverlay();
 
 		// CREATE THE SCENE
-		Ogre::Entity* ent_1 = scnMgr->createEntity("Cube_1", "cube.mesh");
-		Ogre::SceneNode* node_1 = scnMgr->createSceneNode("Node_1");
-		PhysicsObject* physObj_1 = static_cast<PhysicsObject*>(
-			scnMgr->createMovableObject("PhysicsObject1", "PhysicsObject"));
-		scnMgr->getRootSceneNode()->addChild(node_1);
-		node_1->attachObject(ent_1);
-		node_1->attachObject(physObj_1);
 
-		node_1->pitch(Ogre::Radian(Ogre::Math::DegreesToRadians(90))); // TEMP
+		factory->createObject(scnMgr, Ogre::Vector3(-30, 10, 0), false, Ogre::Vector3(0.1f));
 
-		node_1->setScale(0.4, 0.4, 0.4);
-		physObj_1->setEntity(ent_1);
-		node_1->setPosition(-25, 0, 0);
-		ent_1->setMaterialName("Plain"); // Plain or Highlight
-		PhysicsObjects.push_front(physObj_1);
+		factory->createObject(scnMgr, Ogre::Vector3(30, 10, 0), false, Ogre::Vector3(0.1f));
 
-		Ogre::Entity* ent_2 = scnMgr->createEntity("Cube_2", "cube.mesh");
-		Ogre::SceneNode* node_2 = scnMgr->createSceneNode("Node_2");
-		PhysicsObject* physObj_2 = static_cast<PhysicsObject*>(
-			scnMgr->createMovableObject("PhysicsObject2", "PhysicsObject"));
-		scnMgr->getRootSceneNode()->addChild(node_2);
-		node_2->attachObject(ent_2);
-		node_2->attachObject(physObj_2);
+		factory->createObject(scnMgr, Ogre::Vector3(-20, 0, 0), false, Ogre::Vector3(0.1f));
 
-		node_2->pitch(Ogre::Radian(Ogre::Math::DegreesToRadians(90))); // TEMP
+		factory->createObject(scnMgr, Ogre::Vector3(20, 0, 0), false, Ogre::Vector3(0.1f));
 
-		node_2->setScale(0.4, 0.4, 0.4); 
-		physObj_2->setEntity(ent_2);
-		node_2->setPosition(25, 0, 0);
-		ent_2->setMaterialName("Plain"); // Plain or Highlight
-		PhysicsObjects.push_front(physObj_2);
+		// My really terrible floor ceiling to deal with a pseudo collision detection
+		for (int i = 0; i < 21; i++)
+		{
+			factory->createObject(scnMgr, Ogre::Vector3(-100 + i * 10 , -70, 0), true, Ogre::Vector3(0.1f, 0.1f, 0.1f));
+
+			factory->createObject(scnMgr, Ogre::Vector3(-100 + i * 10, 70, 0), true, Ogre::Vector3(0.1f, 0.1f, 0.1f));
+		}
+
+		// My really terrible floor ceiling to deal with a pseudo collision detection
+		for (int i = 0; i < 13; i++)
+		{
+			factory->createObject(scnMgr, Ogre::Vector3(-100, 60 - 10 * i, 0), true, Ogre::Vector3(0.1f, 0.1f, 0.1f));
+
+			factory->createObject(scnMgr, Ogre::Vector3(100, 60 - 10 * i, 0), true, Ogre::Vector3(0.1f, 0.1f, 0.1f));
+		}
+
 	}
 	catch (Ogre::Exception& e) {
 		std::cerr << "...................................................\n";
@@ -289,20 +287,11 @@ SDL_AppResult SDL_AppIterate(void *appstate)
 		if (root) {
 			root->renderOneFrame();
 
-			// 
-			for (std::list<PhysicsObject*>::iterator obj = PhysicsObjects.begin(); obj != PhysicsObjects.end(); ++obj) {
-				(*obj)->Move();
-			}
+			std::chrono::steady_clock::time_point TimeCurrent = std::chrono::steady_clock::now();
+			float deltaTime = std::chrono::duration_cast<std::chrono::microseconds>(TimeCurrent - TimePoint).count() * 0.000001f;
+			TimePoint = TimeCurrent;
 
-			// Temporary: We ask if each object is colliding with every other object in the scene
-			for (std::list<PhysicsObject*>::iterator i = PhysicsObjects.begin(); i != PhysicsObjects.end(); ++i) {
-				for (std::list<PhysicsObject*>::iterator j = PhysicsObjects.begin(); j != PhysicsObjects.end(); ++j) {
-					if (i != j)
-					{
-						(*i)->CheckCollision((*j));
-					}
-				}
-			}
+			factory->Update(deltaTime);
 		}
 	}
 	catch (Ogre::Exception& e) {
