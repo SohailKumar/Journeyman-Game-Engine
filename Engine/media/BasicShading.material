@@ -1,0 +1,24 @@
+material BasicShadedPlastic
+{
+    technique
+    {
+        pass
+        {
+            // 1. Scene lighting interaction
+            lighting on
+            
+            // 2. Ambient: The color in the shadows (Keep low for "dark" sides)
+            ambient 0.3 0.3 0.3 1.0
+
+            // 3. Diffuse: The main color of the object (The "bright" side)
+            diffuse 0.6 0.2 0.8 1.0
+
+            // 4. Specular: The shiny 'hotspot' from the light source
+            // Format: Red Green Blue Alpha Shininess
+            specular 1.0 1.0 1.0 1.0 20.0
+
+            // 5. Shading Mode: 'gouraud' is smooth, 'flat' is faceted
+            shading gouraud
+        }
+    }
+}

@@ -1,17 +1,70 @@
 #include "Ogre.h"
-#include "OgreApplicationContext.h"
+#include "OgreUtil.h"
+#include "PhysicsObject.h"
+#include "Helper.h"
 
-class KeyHandler : public OgreBites::InputListener
-{
-    bool keyPressed(const OgreBites::KeyboardEvent& evt) override
-    {
-        if (evt.keysym.sym == OgreBites::SDLK_ESCAPE)
-        {
-            Ogre::Root::getSingleton().queueEndRendering();
-        }
-        return false;
-    }
-};
+void OgreUtil::CreateCube(Ogre::SceneManager* scnMgr) {
+	Ogre::SceneNode* node = scnMgr->createSceneNode("Node_Cube_" + std::to_string(cubeCount));
+
+	Ogre::Entity* ent = scnMgr->createEntity("Cube_" + std::to_string(cubeCount), "cube.mesh");
+	ent->setQueryFlags(ENTITY);
+	PhysicsObject* physObj = static_cast<PhysicsObject*>(
+		scnMgr->createMovableObject("PhysicsObject_Cube_" + std::to_string(cubeCount), "PhysicsObject"));
+	physObj->setQueryFlags(PHYSICS_OBJECT);
+
+	scnMgr->getRootSceneNode()->addChild(node);
+	node->attachObject(ent);
+	node->attachObject(physObj);
+
+	node->setScale(0.3, 0.3, 0.3);
+	physObj->setEntity(ent);
+	node->setPosition(0, 0, -5);
+	ent->setMaterialName("BasicShadedPlastic");
+
+	cubeCount++;
+}
+
+void OgreUtil::CreateSphere(Ogre::SceneManager* scnMgr) {
+	Ogre::SceneNode* node = scnMgr->createSceneNode("Node_Sphere_" + std::to_string(sphereCount));
+
+	Ogre::Entity* ent = scnMgr->createEntity("Sphere_" + std::to_string(sphereCount), "sphere.mesh");
+	ent->setQueryFlags(ENTITY);
+	PhysicsObject* physObj = static_cast<PhysicsObject*>(
+		scnMgr->createMovableObject("PhysicsObject_Sphere_" + std::to_string(sphereCount), "PhysicsObject"));
+	physObj->setQueryFlags(PHYSICS_OBJECT);
+
+	scnMgr->getRootSceneNode()->addChild(node);
+	node->attachObject(ent);
+	node->attachObject(physObj);
+
+	node->setScale(0.1, 0.1, 0.1);
+	physObj->setEntity(ent);
+	node->setPosition(0, 2, -10);
+	ent->setMaterialName("BasicShadedPlastic");
+
+	sphereCount++;
+}
+
+void OgreUtil::CreateOgre(Ogre::SceneManager* scnMgr) {
+	Ogre::SceneNode* node = scnMgr->createSceneNode("Node_Ogre_" + std::to_string(ogreCount));
+
+	Ogre::Entity* ent = scnMgr->createEntity("Ogre_" + std::to_string(ogreCount), "ogrehead.mesh");
+	ent->setQueryFlags(ENTITY);
+	PhysicsObject* physObj = static_cast<PhysicsObject*>(
+		scnMgr->createMovableObject("PhysicsObject_Ogre_" + std::to_string(ogreCount), "PhysicsObject"));
+	physObj->setQueryFlags(PHYSICS_OBJECT);
+
+	scnMgr->getRootSceneNode()->addChild(node);
+	node->attachObject(ent);
+	node->attachObject(physObj);
+
+	node->setScale(0.1, 0.1, 0.1);
+	physObj->setEntity(ent);
+	node->setPosition(0, 0, -5);
+	//ent->setMaterialName("BasicShading");
+
+	ogreCount++;
+}
 
 //int main(int argc, char* argv[])
 //{
