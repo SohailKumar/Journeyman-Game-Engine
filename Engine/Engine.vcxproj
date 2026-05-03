@@ -188,10 +188,12 @@ xcopy "$(OGRE_SDK)\Build\bin\$(Configuration)" "$(OutDir)" /i /y /d</Command>
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="plain.material" />
+    <None Include="media\BasicShading.material" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Helper.h" />
     <ClInclude Include="imgui\imgui_impl_sdl3.h" />
+    <ClInclude Include="OgreUtil.h" />
     <ClInclude Include="PhysicsObject.h" />
     <ClInclude Include="PhysicsObjectFactory.h" />
   </ItemGroup>

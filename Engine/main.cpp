@@ -6,6 +6,7 @@
 #include <OgreRenderSystem.h>
 #include <Ogre.h>
 #include "OgreRoot.h"
+#include "OgreUtil.h"
 
 //overlay
 #include <OgreImGuiOverlay.h>
@@ -21,15 +22,27 @@
 #include "PhysicsObjectFactory.h"
 #include "PhysicsObject.h"
 
+#include "Helper.h"
+
+#define WINDOWWIDTH 1280
+#define WINDOWHEIGHT 720
+
 static SDL_Window* window = NULL;
 //static SDL_Renderer* renderer = NULL;
 Ogre::Root* root;
 Ogre::SceneManager* scnMgr;
+Ogre::OverlaySystem* mOverlaySystem;
+Ogre::ImGuiOverlay* imguiOverlay;
+Ogre::RaySceneQuery* mRaySceneQuery;
 PhysicsObjectFactory* factory;
+std::unique_ptr<SelectedObject> selectedObject;
 
 std::list<PhysicsObject*> PhysicsObjects;
 
+
 int SetupOgre(Ogre::String windowHandleStr, unsigned int windowWidth, unsigned int windowHeight) {
+	mOverlaySystem = new Ogre::OverlaySystem();
+
 	// Set RenderSystem
 	auto* renderSystem = root->getRenderSystemByName("OpenGL Rendering Subsystem");
 	root->setRenderSystem(renderSystem);
@@ -63,30 +76,95 @@ int SetupOgre(Ogre::String windowHandleStr, unsigned int windowWidth, unsigned i
 		return SDL_APP_FAILURE;
 	}
 
+	// Setup ImGui Overlay
+	scnMgr->addRenderQueueListener(mOverlaySystem);
+	imguiOverlay = new Ogre::ImGuiOverlay();
+	Ogre::OverlayManager* overlayManager = Ogre::OverlayManager::getSingletonPtr();
+	float vpScale = 1.0f;
+	if (overlayManager)
+	{
+		overlayManager->addOverlay(imguiOverlay);
+		vpScale = overlayManager->getPixelRatio();
+	}
+
+	ImGui::CreateContext();
+	ImGui::GetIO().FontGlobalScale = std::round(vpScale); // default font does not work with fractional scaling
+	imguiOverlay->setZOrder(300);
+	imguiOverlay->show();
+
+	ImGui_ImplSDL3_InitForOther(window);
+
+	// Stuff to selecct an object
+	mRaySceneQuery = scnMgr->createRayQuery(Ogre::Ray());
+	mRaySceneQuery->setQueryTypeMask(ENTITY);
+	mRaySceneQuery->setSortByDistance(true);
+	selectedObject = std::unique_ptr<SelectedObject>(new SelectedObject());
+
 	// Setup Standard Scene Objects
 	scnMgr->setAmbientLight(Ogre::ColourValue::ColourValue(1.0, 1.0, 1.0));
 
 	Ogre::Light* light = scnMgr->createLight("MainLight");
 	Ogre::SceneNode* lightNode = scnMgr->getRootSceneNode()->createChildSceneNode();
 	lightNode->attachObject(light);
-	lightNode->setPosition(0, 10, 15);
+	lightNode->setPosition(0, 5, -10);
+	light->setCastShadows(true);
+	light->setDiffuseColour(Ogre::ColourValue(1.0, 1.0, 1.0)); // Bright white
+	light->setSpecularColour(Ogre::ColourValue(0.5, 0.5, 0.5)); // Shine color
 
 	Ogre::SceneNode* camNode = scnMgr->getRootSceneNode()->createChildSceneNode();
 	camNode->setPosition(0, 0, 100);
 	camNode->lookAt(Ogre::Vector3(0, 0, -1), Ogre::Node::TS_PARENT);
 
 	Ogre::Camera* cam = scnMgr->createCamera("myCam");
+	cam->setAspectRatio(Ogre::Real(windowWidth) / Ogre::Real(windowHeight));
 	cam->setNearClipDistance(5); // specific to this sample
 	cam->setAutoAspectRatio(false);
 	camNode->attachObject(cam);
 
 	Ogre::Viewport* vp = ogreWin->addViewport(cam);
-	vp->setBackgroundColour(Ogre::ColourValue::ColourValue(0.2, 0.2, 0.2));
+	vp->setBackgroundColour(Ogre::ColourValue::ColourValue(0.1, 0.1, 0.1));
+}
+
+void SetupUI() {
+	namespace IG = ImGui;
+
+	ImGuiViewport* viewport = IG::GetMainViewport();
+	float panelWidth = 200.0f;
+	ImGui::SetNextWindowPos(ImVec2(viewport->Size.x, 0),
+		ImGuiCond_Always,
+		ImVec2(1, 0));
+	ImGui::SetNextWindowSize(ImVec2(panelWidth, viewport->Size.y));
+	ImGui::Begin("Details", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+	//ImGui::TextWrapped();
+	std::string selectedText = "Selected Object: " + selectedObject->name;
+	ImGui::TextWrapped("%s", selectedText.c_str());
+	ImGui::End();
+
+	if (IG::BeginMainMenuBar())
+	{
+		if (IG::BeginMenu("New")) {
+			if (IG::MenuItem("Cube")) {
+				OgreUtil::CreateCube(scnMgr);
+			}
+			if (IG::MenuItem("Sphere")) {
+				OgreUtil::CreateSphere(scnMgr);
+			}
+			IG::Separator();
+			if (IG::MenuItem("Ogre")) {
+				OgreUtil::CreateOgre(scnMgr);
+			}
+			IG::EndMenu();
+		}
+		if (IG::MenuItem("ClearScene")) {
+			scnMgr->clearScene();
+		}
+		IG::EndMainMenuBar();
+	}
+
 }
 
 // Start function
 SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[]) {
-
 	// Create SDL Window
 	SDL_SetAppMetadata("Renderer Test", "0.1", "journeymanengine");
 
@@ -94,9 +172,8 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[]) {
 		SDL_Log("Couldn't initialize SDL: %s", SDL_GetError());
 		return SDL_APP_FAILURE;
 	}
-	int windowWidth = 1280;
-	int windowHeight = 720;
-	window = SDL_CreateWindow("Render Test", windowWidth, windowHeight, SDL_WINDOW_RESIZABLE);
+
+	window = SDL_CreateWindow("Render Test", WINDOWWIDTH, WINDOWHEIGHT, SDL_WINDOW_RESIZABLE);
 	if (!window) {
 		SDL_Log("Couldn't create window/renderer: %s", SDL_GetError());
 		return SDL_APP_FAILURE;
@@ -124,25 +201,7 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[]) {
 	}
 
 	try {
-		Ogre::OverlaySystem* mOverlaySystem = new Ogre::OverlaySystem();
-
-		SetupOgre(windowHandleStr, windowWidth, windowHeight);
-
-		scnMgr->addRenderQueueListener(mOverlaySystem);
-		Ogre::ImGuiOverlay* imguiOverlay = new Ogre::ImGuiOverlay();
-		Ogre::OverlayManager* overlayManager = Ogre::OverlayManager::getSingletonPtr();
-		float vpScale = 1.0f;
-		if (overlayManager)
-		{	overlayManager->addOverlay(imguiOverlay); 
-			vpScale = overlayManager->getPixelRatio();
-		}
-
-		ImGui::CreateContext();
-		ImGui::GetIO().FontGlobalScale = std::round(vpScale); // default font does not work with fractional scaling
-		imguiOverlay->setZOrder(300);
-		imguiOverlay->show();
-
-		ImGui_ImplSDL3_InitForOther(window);
+		SetupOgre(windowHandleStr, WINDOWWIDTH, WINDOWHEIGHT);
 
 		// CREATE THE SCENE
 		Ogre::Entity* ent_1 = scnMgr->createEntity("Cube_1", "cube.mesh");
@@ -155,9 +214,9 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[]) {
 
 		node_1->pitch(Ogre::Radian(Ogre::Math::DegreesToRadians(90))); // TEMP
 
-		node_1->setScale(0.4, 0.4, 0.4);
+		node_1->setScale(0.1, 0.1, 0.6);
 		physObj_1->setEntity(ent_1);
-		node_1->setPosition(-25, 0, 0);
+		node_1->setPosition(-25, -30, -10);
 		ent_1->setMaterialName("Plain"); // Plain or Highlight
 		PhysicsObjects.push_front(physObj_1);
 
@@ -171,9 +230,9 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[]) {
 
 		node_2->pitch(Ogre::Radian(Ogre::Math::DegreesToRadians(90))); // TEMP
 
-		node_2->setScale(0.4, 0.4, 0.4); 
+		node_2->setScale(0.2, 0.2, 0.2); 
 		physObj_2->setEntity(ent_2);
-		node_2->setPosition(25, 0, 0);
+		node_2->setPosition(0, -30, -10);
 		ent_2->setMaterialName("Plain"); // Plain or Highlight
 		PhysicsObjects.push_front(physObj_2);
 	}
@@ -189,15 +248,29 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[]) {
 SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event) 
 {
 	ImGui_ImplSDL3_ProcessEvent(event);
+	ImGuiIO& io = ImGui::GetIO();
 
 	if (event->type == SDL_EVENT_QUIT) {
 		return SDL_APP_SUCCESS;
 	}
 
-	if (event->type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
+	if (event->type == SDL_EVENT_MOUSE_BUTTON_DOWN && !io.WantCaptureMouse) {
 
 		try {
-
+			float mouseX;
+			float mouseY;
+			SDL_GetMouseState(&mouseX, &mouseY);
+			Ogre::Ray ray = scnMgr->getCamera("myCam")->getCameraToViewportRay(mouseX / WINDOWWIDTH, mouseY / WINDOWHEIGHT);
+			mRaySceneQuery->setRay(ray);
+			Ogre::RaySceneQueryResult& result = mRaySceneQuery->execute();
+			for (auto& item : result) {
+				std::cout << "Hit Distance: " << item.distance << std::endl;
+				if (item.movable) {
+					std::cout << "\tHit: " << item.movable->getName() << std::endl;
+					selectedObject->name = item.movable->getName();
+					break;
+				}
+			}
 			//{
 			//	Ogre::ManualObject* man = scnMgr->createManualObject("test");
 			//	man->begin("Examples/BeachStonesA", Ogre::RenderOperation::OT_TRIANGLE_LIST);
@@ -312,9 +385,8 @@ SDL_AppResult SDL_AppIterate(void *appstate)
 			ImGui_ImplSDL3_NewFrame();
 			Ogre::ImGuiOverlay::NewFrame();
 
-			ImGui::Begin("Random Window");
-			ImGui::Text("Hello SDL3 and Ogre!");
-			ImGui::End();
+			ImGui::ShowDemoWindow();
+			SetupUI();
 
 			root->renderOneFrame();
 
@@ -356,6 +428,10 @@ SDL_AppResult SDL_AppIterate(void *appstate)
 
 void SDL_AppQuit(void* appstate, SDL_AppResult result) 
 {
+	delete factory;
+	root->shutdown();
+	delete root;
+
 	ImGui_ImplSDL3_Shutdown();
 	ImGui::DestroyContext();
 }
