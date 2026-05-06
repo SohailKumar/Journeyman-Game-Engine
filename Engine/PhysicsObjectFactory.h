@@ -21,13 +21,29 @@ public:
     }
 
     void createObject(Ogre::SceneManager* scnMgr, Ogre::Vector3 position, bool isStatic = false,
-        Ogre::Vector3 scale = Ogre::Vector3(1.0f));
+        Ogre::Vector3 scale = Ogre::Vector3(1.0f), const Ogre::String& mesh = "cube.mesh");
 
     void Update(float deltaTime);
 
-    void ClearObjects()
+    void ClearObjects(Ogre::SceneManager* scnMgr)
     {
+        for(PhysicsObject *obj : PhysicsObjects)
+        {
+            Ogre::SceneNode* parentNode = obj->getParentSceneNode();
+
+            if (parentNode) {
+                // Detach the object from the node
+                parentNode->detachObject(obj);
+            }
+
+            scnMgr->destroyMovableObject(obj);
+
+            if (parentNode) {
+                scnMgr->destroySceneNode(parentNode);
+            }
+		}
         PhysicsObjects.clear();
+
     }
 
 private:

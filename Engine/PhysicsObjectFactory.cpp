@@ -9,13 +9,13 @@ PhysicsObjectFactory::~PhysicsObjectFactory()
 {
 }
 
-void PhysicsObjectFactory::createObject(Ogre::SceneManager* scnMgr, Ogre::Vector3 position, bool isStatic, Ogre::Vector3 scale)
+void PhysicsObjectFactory::createObject(Ogre::SceneManager* scnMgr, Ogre::Vector3 position, bool isStatic, Ogre::Vector3 scale, const Ogre::String& mesh)
 {
     const Ogre::String nameObj = "Object_%f" + std::to_string(index);
     const Ogre::String nameNode = "Node_%f" + std::to_string(index);
     const Ogre::String namePhys = "PhysObj_%f" + std::to_string(index);
 
-    Ogre::Entity* ent = scnMgr->createEntity(nameObj, "cube.mesh");
+    Ogre::Entity* ent = scnMgr->createEntity(nameObj, mesh);
     Ogre::SceneNode* node = scnMgr->createSceneNode(nameNode);
     PhysicsObject* physObj = static_cast<PhysicsObject*>(
         scnMgr->createMovableObject(namePhys, "PhysicsObject"));
@@ -26,8 +26,11 @@ void PhysicsObjectFactory::createObject(Ogre::SceneManager* scnMgr, Ogre::Vector
     node->setScale(scale);
     physObj->Initialize(ent, isStatic);
     node->setPosition(position);
-    ent->setMaterialName(isStatic ? "Plain" : "Highlight"); // Plain or Highlight
-
+    if (mesh == "cube.mesh") {
+        ent->setMaterialName(isStatic ? "Examples/Water0" : "CheckShading");
+    } else if (mesh == "sphere.mesh") {
+        ent->setMaterialName(isStatic ? "Plain" : "Examples/SphereMappedRustySteel");
+    }
     index += 1;
 
     PhysicsObjects.push_front(physObj);

@@ -137,6 +137,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(SolutionDir)external\SDL3\include;$(SolutionDir)external\glm-1.0.3\glm;$(ProjectDir)imgui;$(OGRE_SDK)\OgreMain\include;$(OGRE_SDK)\Build\imgui-1.91.9b;$(OGRE_SDK)\Components\Overlay\include;$(OGRE_SDK)\Components\Bites\include;$(OGRE_SDK)\Build\include;$(OGRE_SDK)\Components\RTShaderSystem\include</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -159,6 +160,7 @@ xcopy "$(OGRE_SDK)\Build\bin\$(Configuration)" "$(OutDir)" /i /y /d</Command>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(SolutionDir)external\SDL3\include;$(SolutionDir)external\glm-1.0.3\glm;$(ProjectDir)imgui;$(OGRE_SDK)\OgreMain\include;$(OGRE_SDK)\Build\imgui-1.91.9b;$(OGRE_SDK)\Components\Overlay\include;$(OGRE_SDK)\Components\Bites\include;$(OGRE_SDK)\Build\include;$(OGRE_SDK)\Components\RTShaderSystem\include</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

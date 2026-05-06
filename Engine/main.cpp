@@ -6,11 +6,9 @@
 #include <OgreRenderSystem.h>
 #include <Ogre.h>
 #include "OgreRoot.h"
-<<<<<<< HEAD
 #include <chrono>
-=======
 #include "OgreUtil.h"
->>>>>>> c367456 (creating objects works)
+#include <filesystem>
 
 //overlay
 #include <OgreImGuiOverlay.h>
@@ -44,6 +42,7 @@ std::unique_ptr<SelectedObject> selectedObject;
 std::chrono::steady_clock::time_point TimePoint;
 std::list<PhysicsObject*> PhysicsObjects;
 
+namespace fs = std::filesystem;
 
 int SetupOgre(Ogre::String windowHandleStr, unsigned int windowWidth, unsigned int windowHeight) {
 	mOverlaySystem = new Ogre::OverlaySystem();
@@ -67,7 +66,10 @@ int SetupOgre(Ogre::String windowHandleStr, unsigned int windowWidth, unsigned i
 	size_t size = 0;
 	if (_dupenv_s(&buffer, &size, "OGRE_SDK") == 0 && buffer != nullptr) {
 		//Ogre::ResourceGroupManager::getSingleton().addResourceLocation((std::string(buffer) +"\\Media"), "FileSystem", "General", false);
-		Ogre::ResourceGroupManager::getSingleton().addResourceLocation("media", "FileSystem", "Internal");
+		auto path = fs::current_path() / "Media";
+		std::cout << "asdfasdfawefASDFAWEFASDFAS \n\n\n\n\nCurrent Path: " << path.string() << std::endl;
+		std::cout << (std::string(buffer) + "\\Samples\\Media\\materials\\scripts") << std::endl;
+		Ogre::ResourceGroupManager::getSingleton().addResourceLocation(path.string(), "FileSystem", "General");
 		Ogre::ResourceGroupManager::getSingleton().addResourceLocation((std::string(buffer) + "\\Media\\Main"), "FileSystem", "Internal");
 		Ogre::ResourceGroupManager::getSingleton().addResourceLocation((std::string(buffer) + "\\Media\\RTShaderLib"), "FileSystem", "Internal", false);
 		Ogre::ResourceGroupManager::getSingleton().addResourceLocation((std::string(buffer) + "\\Samples\\Media\\models"), "FileSystem", "General", false, false);
@@ -99,7 +101,7 @@ int SetupOgre(Ogre::String windowHandleStr, unsigned int windowWidth, unsigned i
 
 	ImGui_ImplSDL3_InitForOther(window);
 
-	// Stuff to selecct an object
+	// Stuff to select an object
 	mRaySceneQuery = scnMgr->createRayQuery(Ogre::Ray());
 	mRaySceneQuery->setQueryTypeMask(ENTITY);
 	mRaySceneQuery->setSortByDistance(true);
@@ -140,28 +142,33 @@ void SetupUI() {
 		ImVec2(1, 0));
 	ImGui::SetNextWindowSize(ImVec2(panelWidth, viewport->Size.y));
 	ImGui::Begin("Details", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
-	//ImGui::TextWrapped();
-	std::string selectedText = "Selected Object: " + selectedObject->name;
-	ImGui::TextWrapped("%s", selectedText.c_str());
+
+	if (selectedObject->selected) {
+		std::string selectedText = "Selected Object: \n\t" + selectedObject->name;
+		ImGui::TextWrapped("%s", selectedText.c_str());
+		ImGui::TextWrapped("Position: \n\tx=%.2f\n\ty=%.2f\n\tz=%.2f", selectedObject->position[0], selectedObject->position[1], selectedObject->position[2]);
+	}
 	ImGui::End();
 
 	if (IG::BeginMainMenuBar())
 	{
 		if (IG::BeginMenu("New")) {
 			if (IG::MenuItem("Cube")) {
-				OgreUtil::CreateCube(scnMgr);
+				OgreUtil::CreateCube(scnMgr, factory);
 			}
 			if (IG::MenuItem("Sphere")) {
-				OgreUtil::CreateSphere(scnMgr);
+				OgreUtil::CreateSphere(scnMgr, factory);
 			}
 			IG::Separator();
 			if (IG::MenuItem("Ogre")) {
-				OgreUtil::CreateOgre(scnMgr);
+				OgreUtil::CreateOgre(scnMgr, factory);
 			}
 			IG::EndMenu();
 		}
 		if (IG::MenuItem("ClearScene")) {
-			scnMgr->clearScene();
+			if(selectedObject->selected)
+				selectedObject->UnSelect(scnMgr);
+			factory->ClearObjects(scnMgr);
 		}
 		IG::EndMainMenuBar();
 	}
@@ -214,15 +221,15 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[]) {
 
 		factory->createObject(scnMgr, Ogre::Vector3(-30, 10, 0), false, Ogre::Vector3(0.1f));
 
-<<<<<<< HEAD
+//<<<<<<< HEAD
 		factory->createObject(scnMgr, Ogre::Vector3(30, 10, 0), false, Ogre::Vector3(0.1f));
-=======
-		node_1->setScale(0.1, 0.1, 0.6);
-		physObj_1->setEntity(ent_1);
-		node_1->setPosition(-25, -30, -10);
-		ent_1->setMaterialName("Plain"); // Plain or Highlight
-		PhysicsObjects.push_front(physObj_1);
->>>>>>> c367456 (creating objects works)
+//=======
+//		node_1->setScale(0.1, 0.1, 0.6);
+//		physObj_1->setEntity(ent_1);
+//		node_1->setPosition(-25, -30, -10);
+//		ent_1->setMaterialName("Plain"); // Plain or Highlight
+//		PhysicsObjects.push_front(physObj_1);
+//>>>>>>> c367456 (creating objects works)
 
 		factory->createObject(scnMgr, Ogre::Vector3(-20, 0, 0), false, Ogre::Vector3(0.1f));
 
@@ -244,14 +251,14 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[]) {
 			factory->createObject(scnMgr, Ogre::Vector3(100, 60 - 10 * i, 0), true, Ogre::Vector3(0.1f, 0.1f, 0.1f));
 		}
 
-<<<<<<< HEAD
-=======
-		node_2->setScale(0.2, 0.2, 0.2); 
-		physObj_2->setEntity(ent_2);
-		node_2->setPosition(0, -30, -10);
-		ent_2->setMaterialName("Plain"); // Plain or Highlight
-		PhysicsObjects.push_front(physObj_2);
->>>>>>> c367456 (creating objects works)
+//<<<<<<< HEAD
+//=======
+//		node_2->setScale(0.2, 0.2, 0.2); 
+//		physObj_2->setEntity(ent_2);
+//		node_2->setPosition(0, -30, -10);
+//		ent_2->setMaterialName("Plain"); // Plain or Highlight
+//		PhysicsObjects.push_front(physObj_2);
+//>>>>>>> c367456 (creating objects works)
 	}
 	catch (Ogre::Exception& e) {
 		std::cerr << "...................................................\n";
@@ -281,114 +288,37 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event)
 			mRaySceneQuery->setRay(ray);
 			Ogre::RaySceneQueryResult& result = mRaySceneQuery->execute();
 			for (auto& item : result) {
-				std::cout << "Hit Distance: " << item.distance << std::endl;
+				//std::cout << "Hit Distance: " << item.distance << std::endl;
 				if (item.movable) {
-					std::cout << "\tHit: " << item.movable->getName() << std::endl;
+					//std::cout << "\tHit: " << item.movable->getName() << std::endl;
+					if (selectedObject->selected) {
+						selectedObject->ResetLastObjectMaterial(scnMgr);
+					}
+					selectedObject->selected = true;
 					selectedObject->name = item.movable->getName();
-					break;
+					selectedObject->position[0] = item.movable->getParentSceneNode()->getPosition().x;
+					selectedObject->position[1] = item.movable->getParentSceneNode()->getPosition().y;
+					selectedObject->position[2] = item.movable->getParentSceneNode()->getPosition().z;
+
+					// 1. Get the node back from the physics body
+					Ogre::SceneNode* node = static_cast<Ogre::SceneNode*>(item.movable->getParentNode());
+
+					// 2. Get the entity attached to that node
+					// Entities are usually the first object attached (index 0)
+					Ogre::Entity* ent = static_cast<Ogre::Entity*>(node->getAttachedObject(0));
+					selectedObject->ogMaterial = ent->getSubEntity(0)->getMaterialName();
+					ent->setMaterialName("Highlight");
+
+					return SDL_APP_CONTINUE;
 				}
 			}
-			//{
-			//	Ogre::ManualObject* man = scnMgr->createManualObject("test");
-			//	man->begin("Examples/BeachStonesA", Ogre::RenderOperation::OT_TRIANGLE_LIST);
-
-			//	man->position(-20, 20, 20);
-			//	man->normal(0, 0, 1);
-			//	man->textureCoord(0, 0);
-
-			//	man->position(-20, -20, 20);
-			//	man->normal(0, 0, 1);
-			//	man->textureCoord(0, 1);
-
-			//	man->position(20, -20, 20);
-			//	man->normal(0, 0, 1);
-			//	man->textureCoord(1, 1);
-
-			//	man->position(20, 20, 20);
-			//	man->normal(0, 0, 1);
-			//	man->textureCoord(1, 0);
-
-			//	man->quad(0, 1, 2, 3);
-
-			//	man->end();
-			//	scnMgr->getRootSceneNode()->createChildSceneNode()->attachObject(man);
-			//}
-
-			//{
-			//	Ogre::ManualObject* manual = scnMgr->createManualObject("Quad");
-			//	manual->begin("Examples/OgreLogo", Ogre::RenderOperation::OT_TRIANGLE_LIST);
-
-			//	manual->position(5.0, 0.0, 0.0);
-			//	manual->textureCoord(0, 1);
-			//	manual->position(-5.0, 10.0, 0.0);
-			//	manual->textureCoord(1, 0);
-			//	manual->position(-5.0, 0.0, 0.0);
-			//	manual->textureCoord(1, 1);
-			//	manual->position(5.0, 10.0, 0.0);
-			//	manual->textureCoord(0, 0);
-
-			//	manual->index(0);
-			//	manual->index(1);
-			//	manual->index(2);
-			//	manual->index(0);
-			//	manual->index(3);
-			//	manual->index(1);
-
-			//	manual->end();
-			//	manual->convertToMesh("Quad");
-
-			//	Ogre::Entity* ent = scnMgr->createEntity("Quad");
-			//	Ogre::SceneNode* node = scnMgr->getRootSceneNode()->createChildSceneNode("Node1");
-			//	node->attachObject(ent);
-
-			//}
-
-			//{
-			//	Ogre::Plane plane(Ogre::Vector3(0, 1, 0), -10);
-
-			//	Ogre::MeshManager::getSingleton().createPlane("plane", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, plane, 1500, 1500, 20, 20, false, 1, 5, 20, Ogre::Vector3::UNIT_Z);
-
-			//	Ogre::Entity* ent = scnMgr->createEntity("Name Of Plane", "plane");
-
-			//	scnMgr->getRootSceneNode()->createChildSceneNode()->attachObject(ent);
-			//	ent->setMaterialName("PlainWhiteX");
-			//}
-
-			//{
-			//	Ogre::MeshManager::getSingleton().createPlane(
-			//		"MyPlane",
-			//		Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
-			//		Ogre::Plane(Ogre::Vector3(0,1,0), -10), // Normal pointing up
-			//		20, 20, 1, 1,                        // Width, Height, Segments
-			//		false, 1, 5, 5,                         // Normals, TexCoords, U tile, V tile
-			//		Ogre::Vector3::UNIT_Z                  // Up vector
-			//	);
-
-			//	// Create the material
-			//	Ogre::MaterialPtr mat = Ogre::MaterialManager::getSingleton().create(
-			//		"PlaneMaterial",
-			//		Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME
-			//	);
-
-			//	// Set the diffuse color (e.g., a nice Blue)
-			//	Ogre::Pass* pass = mat->getTechnique(0)->getPass(0);
-			//	pass->setDiffuse(0.0, 0.5, 1.0, 1.0);
-			//	pass->setAmbient(0.1, 0.1, 0.1);
-
-			//	Ogre::Entity* planeEnt = scnMgr->createEntity("PlaneEntity", "MyPlane");
-			//	planeEnt->setMaterialName("PlaneMaterial");
-
-			//	Ogre::SceneNode* node = scnMgr->getRootSceneNode()->createChildSceneNode();
-			//	node->attachObject(planeEnt);
-			//	node->setPosition(Ogre::Vector3(0, 0, -30.0f));
-			//}
+			if (selectedObject->selected)
+				selectedObject->UnSelect(scnMgr);
 		}
 		catch (Ogre::Exception& e) {
 			std::cerr << "...................................................\n";
 			std::cerr << "Ogre Exception: " << e.getFullDescription() << std::endl;
 		}
-
-		printf("helllo\n");
 	}
 
 	return SDL_APP_CONTINUE;
@@ -399,6 +329,14 @@ SDL_AppResult SDL_AppIterate(void *appstate)
 {
 	try {
 		if (root) {
+
+			if (selectedObject->selected) {
+				auto movableObject = scnMgr->getMovableObject(selectedObject->name, "PhysicsObject");
+				selectedObject->position[0] = movableObject->getParentSceneNode()->getPosition().x;
+				selectedObject->position[1] = movableObject->getParentSceneNode()->getPosition().y;
+				selectedObject->position[2] = movableObject->getParentSceneNode()->getPosition().z;
+			}
+
 			ImGui_ImplSDL3_NewFrame();
 			Ogre::ImGuiOverlay::NewFrame();
 
@@ -436,8 +374,8 @@ SDL_AppResult SDL_AppIterate(void *appstate)
 
 void SDL_AppQuit(void* appstate, SDL_AppResult result) 
 {
-	delete factory;
 	root->shutdown();
+	delete factory;
 	delete root;
 
 	ImGui_ImplSDL3_Shutdown();
