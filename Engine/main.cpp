@@ -340,7 +340,6 @@ SDL_AppResult SDL_AppIterate(void *appstate)
 			ImGui_ImplSDL3_NewFrame();
 			Ogre::ImGuiOverlay::NewFrame();
 
-			ImGui::ShowDemoWindow();
 			SetupUI();
 
 			root->renderOneFrame();
